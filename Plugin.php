@@ -13,7 +13,8 @@
             <?php require_once('Backups.php'); ?>
         </div>
     </div>
-    <span id="j-version" style="display: none;">1.0.3</span>
+    <span id="j-version" style="display: none;">v1.0</span>
+    <!-- <span id="j-version">请保护好 API 仿制被滥用，建议服务器端配合 IP Fail2ban </span> -->
     <div class="j-setting-notice"></div>
     <script src="<?php echo Helper::options()->rootUrl ?>/usr/plugins/TypechoMobile/assets/js/joe.setting.min.js"></script>
 <?php
@@ -79,33 +80,21 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         //搜索
         Helper::addRoute('get_search_posts',$post.'/search','TypechoMobile_Action','get_search_posts');
         //热门搜索
-        Helper::addRoute('get_search_hot',$post.'/search/hot','TypechoMobile_Action','get_search_hot');
+        // Helper::addRoute('get_search_hot',$post.'/search/hot','TypechoMobile_Action','get_search_hot');
         //文章详情
         Helper::addRoute('get_post_detail',$post.'/detail','TypechoMobile_Action','get_post_detail');
         //页面详情
         Helper::addRoute('get_post_page',$post.'/page','TypechoMobile_Action','get_post_page');
-        //热门 浏览数[views] 点赞数[likes] 评论数[commnets]
-        Helper::addRoute('get_hot_posts',$post.'/hot','TypechoMobile_Action','get_hot_posts');
-        //我的文章 浏览数[views] 点赞数[likes] 评论数[commnets] 收藏[favorite]
-        Helper::addRoute('get_my_posts',$post.'/my','TypechoMobile_Action','get_my_posts');
+        // //热门 浏览数[views] 点赞数[likes] 评论数[commnets]
+        // Helper::addRoute('get_hot_posts',$post.'/hot','TypechoMobile_Action','get_hot_posts');
+        // //我的文章 浏览数[views] 点赞数[likes] 评论数[commnets] 收藏[favorite]
+        // Helper::addRoute('get_my_posts',$post.'/my','TypechoMobile_Action','get_my_posts');
  
 
 
         $user = $base.'/user';
         //用户登陆
         Helper::addRoute('user_login',$user.'/login','TypechoMobile_Action','user_login');
-
-        //用户点赞
-        Helper::addRoute('user_like',$user.'/like','TypechoMobile_Action','user_like');
-        //用户收藏
-        Helper::addRoute('user_favorite',$user.'/favorite','TypechoMobile_Action','user_favorite');
-
-        $circle = $base.'/circle';
-        Helper::addRoute('circle_hot',$circle.'/hot','TypechoMobile_Action','circle_hot');
-        Helper::addRoute('circle_hot_list',$circle.'/hot_list','TypechoMobile_Action','circle_hot_list');
-        Helper::addRoute('circle_follow_user',$circle.'/follow_user','TypechoMobile_Action','circle_follow_user');
-        Helper::addRoute('circle_cancel_follow_user',$circle.'/cancelf_user','TypechoMobile_Action','circle_cancel_follow_user');
-
     }
     
     /**
@@ -142,18 +131,7 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         Helper::removeRoute('get_my_posts');
 
 
-
         Helper::removeRoute('user_login');
-        Helper::removeRoute('user_login3');
-        Helper::removeRoute('user_logintest');
-        Helper::removeRoute('user_index');
-        Helper::removeRoute('user_like');
-        Helper::removeRoute('user_favorite');
-
-        Helper::removeRoute('circle_hot');
-        Helper::removeRoute('circle_hot_list');
-        Helper::removeRoute('circle_follow_user');
-        Helper::removeRoute('circle_cancel_follow_user');
 
 
     }
@@ -186,7 +164,7 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
                     '0' => '不显示',
                     '1' => '显示'
             ),
-            '1','文章摘要','文章列表中是否显示摘要? *目前不生效（因为目前只有管理员功能，后期或许会有针对用户的单独的博客客户端）'
+            '0','文章摘要','文章列表中是否显示摘要? *目前不生效（因为目前只有管理员功能，后期或许会有针对用户的单独的博客客户端）'
         );
         $JSwitch_excerpt->setAttribute('class', 'j-setting-content j-setting-basic');
         $form->addInput($JSwitch_excerpt);
@@ -197,7 +175,7 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
                 '0' => '关闭',
                 '1' => '开启'
             ),
-            '0','评论','是否开启评论功能? *注意：关闭后即使是管理员也无法通过 APP 进行评论'
+            '1','评论','是否开启评论功能? *注意：关闭后即使是管理员也无法通过 APP 进行评论'
         );
         $JSwitch_comment->setAttribute('class', 'j-setting-content j-setting-basic');
         $form->addInput($JSwitch_comment);
@@ -208,7 +186,7 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
                 '0' => '关闭',
                 '1' => '开启'
             ),
-            '0','评论审核','评论是否需要审核？ *注意：只对普通用户生效，管理员评论任然不需要审核'
+            '1','评论审核','评论是否需要审核？ *注意：只对普通用户生效，管理员评论任然不需要审核'
         );
         $JSwitch_comment_verify->setAttribute('class', 'j-setting-content j-setting-basic');
         $form->addInput($JSwitch_comment_verify);
@@ -248,98 +226,98 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
          * 首页设置
          */
 
-        $JHome_top_nav = new Typecho_Widget_Helper_Form_Element_Text(
-            'JHome_top_nav',
-            NULL,
-            "1,2,3",
-            '顶部导航',
-            '分类ID,英文逗号分隔<br>例如：8,12,23 *后期功能'
-        );
-        $JHome_top_nav->setAttribute('class', 'j-setting-content j-setting-index');
-        $form->addInput($JHome_top_nav);
+        // $JHome_top_nav = new Typecho_Widget_Helper_Form_Element_Text(
+        //     'JHome_top_nav',
+        //     NULL,
+        //     "1,2,3",
+        //     '顶部导航',
+        //     '分类ID,英文逗号分隔<br>例如：8,12,23 *后期功能'
+        // );
+        // $JHome_top_nav->setAttribute('class', 'j-setting-content j-setting-index');
+        // $form->addInput($JHome_top_nav);
 
-        $JTop_slide = new Typecho_Widget_Helper_Form_Element_Text(
-            'JTop_slide',
-            NULL,
-            Null,
-            '幻灯片',
-            '设置首页幻灯片显示的文章,文章ID,英文逗号分隔<br>例如：8,12,23 *后期功能(可能移除)'
-        );
-        $JTop_slide->setAttribute('class', 'j-setting-content j-setting-index');
-        $form->addInput($JTop_slide);
+        // $JTop_slide = new Typecho_Widget_Helper_Form_Element_Text(
+        //     'JTop_slide',
+        //     NULL,
+        //     Null,
+        //     '幻灯片',
+        //     '设置首页幻灯片显示的文章,文章ID,英文逗号分隔<br>例如：8,12,23 *后期功能(可能移除)'
+        // );
+        // $JTop_slide->setAttribute('class', 'j-setting-content j-setting-index');
+        // $form->addInput($JTop_slide);
 
-        $JHome_icon_nav = new Typecho_Widget_Helper_Form_Element_Textarea(
-            'JHome_icon_nav',
-            NULL,
-            "https://xcx.jiangqie.com/wp-content/uploads/2020/05/32-1.png||使用必读||/pages/article/article?post_id=76",
-            '导航',
-            '设置首页导航页显示，一行一个，格式：图标||标题||链接<br>
-                         https://xcx.jiangqie.com/wp-content/uploads/2020/05/32-1.png||代码下载||/pages/article/article?post_id=261<br>post_id是要显示文章的id'
-        );
-        $JHome_icon_nav->setAttribute('class', 'j-setting-content j-setting-index');
-        $form->addInput($JHome_icon_nav);
+        // $JHome_icon_nav = new Typecho_Widget_Helper_Form_Element_Textarea(
+        //     'JHome_icon_nav',
+        //     NULL,
+        //     "https://xcx.jiangqie.com/wp-content/uploads/2020/05/32-1.png||使用必读||/pages/article/article?post_id=76",
+        //     '导航',
+        //     '设置首页导航页显示，一行一个，格式：图标||标题||链接<br>
+        //                  https://xcx.jiangqie.com/wp-content/uploads/2020/05/32-1.png||代码下载||/pages/article/article?post_id=261<br>post_id是要显示文章的id'
+        // );
+        // $JHome_icon_nav->setAttribute('class', 'j-setting-content j-setting-index');
+        // $form->addInput($JHome_icon_nav);
 
       
 
 
 
-        $JHome_hot = new Typecho_Widget_Helper_Form_Element_Text(
-            'JHome_hot',
-            NULL,
-            "71",
-            '首页热门',
-            '设置设置首页热门文章,文章ID,英文逗号分隔<br>例如：8,12,23'
-        );
-        $JHome_hot->setAttribute('class', 'j-setting-content j-setting-index');
-        $form->addInput($JHome_hot);
+        // $JHome_hot = new Typecho_Widget_Helper_Form_Element_Text(
+        //     'JHome_hot',
+        //     NULL,
+        //     "71",
+        //     '首页热门',
+        //     '设置设置首页热门文章,文章ID,英文逗号分隔<br>例如：8,12,23'
+        // );
+        // $JHome_hot->setAttribute('class', 'j-setting-content j-setting-index');
+        // $form->addInput($JHome_hot);
 
-        $JHome_list_mode = new Typecho_Widget_Helper_Form_Element_Select(
-            'JHome_list_mode',
-            array(
-                '3'         => '混合模式',
-                '1'         => '小图模式',
-                '2'         => '大图模式',
-            ),
-            '3',
-            '列表模式',
-            '首页文章列表显示方式'
-        );
-        $JHome_list_mode->setAttribute('class', 'j-setting-content j-setting-index');
-        $form->addInput($JHome_list_mode);
+        // $JHome_list_mode = new Typecho_Widget_Helper_Form_Element_Select(
+        //     'JHome_list_mode',
+        //     array(
+        //         '3'         => '混合模式',
+        //         '1'         => '小图模式',
+        //         '2'         => '大图模式',
+        //     ),
+        //     '3',
+        //     '列表模式',
+        //     '首页文章列表显示方式'
+        // );
+        // $JHome_list_mode->setAttribute('class', 'j-setting-content j-setting-index');
+        // $form->addInput($JHome_list_mode);
 
 
-        /**
-         * 热榜设置
-         */
-        $JHot_background= new Typecho_Widget_Helper_Form_Element_Text(
-            'JHot_background',
-            NULL,
-            "https://xcx.jiangqie.com/wp-content/uploads/2020/08/333.png",
-            '热门背景图',
-            '热门背景图'
-        );
-        $JHot_background->setAttribute('class', 'j-setting-content j-setting-hot');
-        $form->addInput($JHot_background);
+        // /**
+        //  * 热榜设置
+        //  */
+        // $JHot_background= new Typecho_Widget_Helper_Form_Element_Text(
+        //     'JHot_background',
+        //     NULL,
+        //     "https://xcx.jiangqie.com/wp-content/uploads/2020/08/333.png",
+        //     '热门背景图',
+        //     '热门背景图'
+        // );
+        // $JHot_background->setAttribute('class', 'j-setting-content j-setting-hot');
+        // $form->addInput($JHot_background);
 
-        $JHot_title = new Typecho_Widget_Helper_Form_Element_Text(
-            'JHot_title',
-            NULL,
-            "热榜",
-            '热门标题',
-            '热门标题'
-        );
-        $JHot_title->setAttribute('class', 'j-setting-content j-setting-hot');
-        $form->addInput($JHot_title);
+        // $JHot_title = new Typecho_Widget_Helper_Form_Element_Text(
+        //     'JHot_title',
+        //     NULL,
+        //     "热榜",
+        //     '热门标题',
+        //     '热门标题'
+        // );
+        // $JHot_title->setAttribute('class', 'j-setting-content j-setting-hot');
+        // $form->addInput($JHot_title);
 
-        $JHot_description = new Typecho_Widget_Helper_Form_Element_Text(
-            'JHot_description',
-            NULL,
-            "热门描述",
-            '热门描述',
-            '热门描述'
-        );
-        $JHot_description->setAttribute('class', 'j-setting-content j-setting-hot');
-        $form->addInput($JHot_description);
+        // $JHot_description = new Typecho_Widget_Helper_Form_Element_Text(
+        //     'JHot_description',
+        //     NULL,
+        //     "热门描述",
+        //     '热门描述',
+        //     '热门描述'
+        // );
+        // $JHot_description->setAttribute('class', 'j-setting-content j-setting-hot');
+        // $form->addInput($JHot_description);
         /**
          * login
          */

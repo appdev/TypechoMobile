@@ -840,39 +840,31 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
      */
     public function get_search_posts()
     {
-        $offset = $this->request->get('offset', 0);
         $search = $this->request->get('search', '');
-
         if (empty($search)) {
-            return $this->make_error('缺少参数');
+            return $this->make_error('没有搜索内容啊 ╮(╯▽╰)╭');
+        }
+        $page_index = $this->request->get('page_index', 1);
+        $page_size = $this->request->get('page_size', 20);
+        if ($page_index < 1) {
+            $page_index = 1;
         }
 
-        $table_post_search = $this->db->getPrefix() . 'one_post_search';//"SELECT times FROM `$table_post_search` WHERE search=%s", $search
-        $times = $this->db->fetchObject($this->db->select('times')->from('table.one_post_search')->where('search = ?', $search))->times;
-        if (empty($times)) {
-            $this->db->query($this->db->insert($table_post_search)->rows([
-                'search' => $search,
-                'times' => 1
-            ]));
+        $offset = ($page_index-1) * $page_size;
+        $limit = "LIMIT $page_size OFFSET $offset";
+       
+        $table_contents = $this->db->getPrefix() . 'contents';//"SELECT times FROM `$table_post_search` WHERE search=%s", $search
+
+        $contents = $this->db->fetchAll($this->db->query("SELECT title,`text`,`password`,cid,`status`,`type` FROM `$table_contents`
+         WHERE type = 'post' AND title LIKE '%$search%' OR text LIKE '%$search%' ORDER BY created DESC $limit"));
+
+        if (empty($contents)) {
+            return $this->make_success($contents);
         } else {
-            $this->db->query($this->db->update($table_post_search)->rows(['times' => $times + 1, 'search' => $search]));
+            $posts = $this->get_posts($contents);
+            return $this->make_success($posts);
         }
-
-        $args = [
-            'posts_per_page' => self::POSTS_PER_PAGE,
-            'offset' => $offset,
-            'orderby' => 'created',
-            's' => $search,
-            'post_type' => ['post']
-        ];
-
-        $hide_cat = self::option_value('JHide_cat');
-        if (!empty($hide_cat)) {
-            $args['category__not_in'] = explode(',', $hide_cat);
-        }
-
-        $posts = $this->get_posts($args);
-        return $this->make_success($posts);
+        
     }
 
     /**
