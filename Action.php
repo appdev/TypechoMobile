@@ -854,14 +854,24 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $limit = "LIMIT $page_size OFFSET $offset";
        
         $table_contents = $this->db->getPrefix() . 'contents';//"SELECT times FROM `$table_post_search` WHERE search=%s", $search
-
-        $contents = $this->db->fetchAll($this->db->query("SELECT title,`text`,`password`,cid,`status`,`type` FROM `$table_contents`
+        $contents = $this->db->fetchAll($this->db->query("SELECT title,`text`,`created`,`password`,cid,`status`,`type` FROM `$table_contents`
          WHERE type = 'post' AND title LIKE '%$search%' OR text LIKE '%$search%' ORDER BY created DESC $limit"));
 
         if (empty($contents)) {
-            return $this->make_success($contents);
+            return $this->make_error($contents);
         } else {
-            $posts = $this->get_posts($contents);
+            $posts = [];
+            foreach ($contents as $content) {
+                $posts[] = [
+                    'cid' => $content['cid'],
+                    'title' => $content['title'],
+                    'password' => $content['password'],
+                    'content' => substr($content['text'] , 0 , 200),
+                    'status' => $content['status'],
+                    'created' => $content['created'],
+                ];
+            }
+
             return $this->make_success($posts);
         }
         
@@ -1128,7 +1138,41 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $this->make_success($posts);
     }
 
-
+  /**
+     * typecho 发布文章
+     * @return array
+     * @throws Typecho_Exception
+     */
+    public function post_new()
+    {   
+        $user_id = $this->check_login();
+        if (!$user_id) {
+            return $this->make_error('还没有登陆', -1);
+        }
+        $title = $request->get('title');
+        $text = $request->get('text');
+        $key = $request->get('sign');
+        if(empty($title)){
+            return $this->make_error('参数错误');
+        }
+        $categoryMid = $request->get('category');
+        $categoryResult=[];
+        if(!empty($categoryMid)) {
+            $category=explode(',',$category);
+            $category=is_array($category)?$category:'';
+            $cids=array();
+            foreach ($category as $v){
+                $catData=get_the_category($v);
+                if(!empty($catData)&&$catData['type']=='category'){
+                    $cids[$catData['mid']]=$catData['mid'];
+                }
+            }
+            $categoryResult=$cids;
+        }else{
+            $categoryResult=[];
+        }
+        return $this->make_success($$categoryResult);
+    }
     
 
 

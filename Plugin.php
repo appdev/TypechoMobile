@@ -79,6 +79,8 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         Helper::addRoute('get_tag_posts',$post.'/tag','TypechoMobile_Action','get_tag_posts');
         //搜索
         Helper::addRoute('get_search_posts',$post.'/search','TypechoMobile_Action','get_search_posts');
+        // 发布文章
+        Helper::addRoute('post_new',$post.'/new','TypechoMobile_Action','post_new');
         //热门搜索
         // Helper::addRoute('get_search_hot',$post.'/search/hot','TypechoMobile_Action','get_search_hot');
         //文章详情
@@ -123,12 +125,13 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         Helper::removeRoute('get_last_posts');
         Helper::removeRoute('get_category_posts');
         Helper::removeRoute('get_search_posts');
-        Helper::removeRoute('get_search_hot');
+        Helper::removeRoute('post_new');
+        // Helper::removeRoute('get_search_hot');
         Helper::removeRoute('get_tag_posts');
         Helper::removeRoute('get_post_detail');
         Helper::removeRoute('get_post_page');
-        Helper::removeRoute('get_hot_posts');
-        Helper::removeRoute('get_my_posts');
+        // Helper::removeRoute('get_hot_posts');
+        // Helper::removeRoute('get_my_posts');
 
 
         Helper::removeRoute('user_login');
