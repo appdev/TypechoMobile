@@ -2,7 +2,7 @@
 <?php
 /**
  * Class Utils
- * author:gogobody
+ * author:yingyue
  */
 function ParsePaopaoBiaoqingCallback($match)
 {
