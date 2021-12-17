@@ -1,3 +1,4 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 # TypechoMobile-plugin
 Typecho Android 客户端的配套插件，你需要配合 [TypechoMobile](https://github.com/appdev/TypechoMobile) 才能正常使用
 
