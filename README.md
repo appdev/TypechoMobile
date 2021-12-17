@@ -1,5 +1,5 @@
 # TypechoMobile-plugin
-Typecho Android 客户端的配套插件
+Typecho Android 客户端的配套插件，你需要配合 [TypechoMobile](https://github.com/appdev/TypechoMobile) 才能正常使用
 
 ## 使用
 [下载最新版本](https://github.com/appdev/TypechoMobile/releases)，放在你的网站`plugins`目录下。
@@ -11,10 +11,12 @@ Typecho Android 客户端的配套插件
 
 然后登录 Typecho 后台，启用插件即可。
 
+## 功能建议
+使用中有任何 bug 兼容问题请前往 https://github.com/appdev/TypechoMobile/issues 提交你的问题
 
-#### 感谢
+### 感谢
 由于我个人部懂 PHP 所以在插件开发中参考了一下项目：
 
-[OneTypecho_Plugin](https://github.com/gogobody/OneTypecho_Plugin)
+[OneTypecho_Plugin](https://github.com/gogobody/OneTypecho_Plugin)  
 [LinxApi](https://github.com/kirileec/LinxApi)
 
