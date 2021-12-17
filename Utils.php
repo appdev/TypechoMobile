@@ -26,22 +26,22 @@ class date_tool
     {
 
         switch ($str) {
-            case 'today':   // 今天凌晨零点的时间戳
+            case 'today': // 今天凌晨零点的时间戳
                 return strtotime(date("Y-m-d"), time());
                 break;
-            case 'yesterday':   // 昨天 即 今天凌晨零点的时间戳 减去 一天的秒数
+            case 'yesterday': // 昨天 即 今天凌晨零点的时间戳 减去 一天的秒数
                 return strtotime(date("Y-m-d"), time()) - 3600 * 24;
                 break;
-            case 'tomorrow':    // 明天 即 今天凌晨零点的时间戳 加上 一天的秒数
+            case 'tomorrow': // 明天 即 今天凌晨零点的时间戳 加上 一天的秒数
                 return strtotime(date("Y-m-d"), time()) + 3600 * 24;
                 break;
             case 'month_first': // 这个月第一天凌晨零点的时间戳
                 return strtotime(date("Y-m"), time());
                 break;
-            case 'year_first':  // 这一年第一天凌晨零点的时间戳
+            case 'year_first': // 这一年第一天凌晨零点的时间戳
                 return strtotime(date("Y-01"), time());
                 break;
-            default:   // 默认为今天凌晨零点的时间戳
+            default: // 默认为今天凌晨零点的时间戳
                 return strtotime(date("Y-m-d"), time());
                 break;
         }
@@ -154,8 +154,8 @@ class date_tool
     public static function getLast7Days()
     {
 
-        $begin = strtotime(date('Y-m-d', strtotime('-6 days')));  // ? 7天前
-        $today_time = strtotime(date('Y-m-d'));  // ? 7天前
+        $begin = strtotime(date('Y-m-d', strtotime('-6 days'))); // ? 7天前
+        $today_time = strtotime(date('Y-m-d')); // ? 7天前
         $now_time = time();
         $weeks_arr = array();
         $weeks_arr['date'] = array();
@@ -194,7 +194,6 @@ class date_tool
 
     }
 
-
     /**
      * @desc 获取月份
      * @param $timestamp 时间戳
@@ -206,11 +205,11 @@ class date_tool
 
         if ($lang == 'cn') {
             $month_arr = array(
-                '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'
+                '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月',
             );
         } else {
             $month_arr = array(
-                'Jan.', 'Feb.', 'Mar.', 'Apr.', 'May.', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.'
+                'Jan.', 'Feb.', 'Mar.', 'Apr.', 'May.', 'Jun.', 'Jul.', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.',
             );
         }
         $month = date('n', $timestamp);
@@ -232,38 +231,38 @@ class Utils
         if ($t < 0) {
             return date('Y-m-d', $time);
         }
-        $y = date('Y', $ctime) - date('Y', $time);//是否跨年
+        $y = date('Y', $ctime) - date('Y', $time); //是否跨年
         switch ($t) {
             case $t == 0:
                 $text = '刚刚';
                 break;
-            case $t < 60://一分钟内
+            case $t < 60: //一分钟内
                 $text = $t . '秒前';
                 break;
-            case $t < 3600://一小时内
+            case $t < 3600: //一小时内
                 $text = floor($t / 60) . '分钟前';
                 break;
-            case $t < 86400://一天内
+            case $t < 86400: //一天内
                 $text = floor($t / 3600) . '小时前'; // 一天内
                 break;
-            case $t < 2592000://30天内
-                if($time > strtotime(date('Ymd',strtotime("-1 day")))) {
+            case $t < 2592000: //30天内
+                if ($time > strtotime(date('Ymd', strtotime("-1 day")))) {
                     $text = '昨天';
-                } elseif($time > strtotime(date('Ymd',strtotime("-2 days")))) {
+                } elseif ($time > strtotime(date('Ymd', strtotime("-2 days")))) {
                     $text = '前天';
                 } else {
                     $text = floor($t / 86400) . '天前';
                 }
                 break;
             case $t < 31536000 && $y == 0: //一年内 不跨年
-                $m = date('m', $ctime) - date('m', $time) -1;
-                if($m == 0) {
+                $m = date('m', $ctime) - date('m', $time) - 1;
+                if ($m == 0) {
                     $text = floor($t / 86400) . '天前';
                 } else {
                     $text = $m . '个月前';
                 }
                 break;
-            case $t < 31536000 && $y > 0://一年内 跨年
+            case $t < 31536000 && $y > 0: //一年内 跨年
                 $text = (12 - date('m', $time) + date('m', $ctime)) . '个月前';
                 break;
             default:
@@ -308,7 +307,37 @@ class Utils
      * @param  [type] $phone [description] 邮箱号
      * @return [type]        [description]
      */
-    public static function Verify_Email($Email = null){
+    public static function Verify_Email($Email = null)
+    {
         return filter_var($Email, FILTER_VALIDATE_EMAIL);
     }
+
+    public function timediff($begin_time, $end_time)
+    {
+        if ($begin_time < $end_time) {
+            $starttime = $begin_time;
+            $endtime = $end_time;
+        } else {
+            $starttime = $end_time;
+            $endtime = $begin_time;
+        }
+
+        //计算天数
+        $timediff = $endtime - $starttime;
+        $days = intval($timediff / 86400);
+        //计算小时数
+        $remain = $timediff % 86400;
+        $hours = intval($remain / 3600);
+        //计算分钟数
+        $remain = $remain % 3600;
+        $mins = intval($remain / 60);
+        //计算秒数
+        $secs = $remain % 60;
+        $res = array("day" => $days, "hour" => $hours, "min" => $mins, "sec" => $secs);
+        // if($days > 0 || $hours > 0 || $mins > 0){
+        //     return 20;
+        // }else return $secs;
+            return $res;
+    }
+
 }

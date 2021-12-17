@@ -24,7 +24,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     /**
      * @var mixed|null
      */
-    public function __construct($request, $response, $params = NULL)
+    public function __construct($request, $response, $params = null)
     {
         parent::__construct($request, $response, $params);
         $this->db = Typecho_Db::get();
@@ -34,7 +34,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         if (method_exists($this, $this->request->type)) {
             call_user_func(array(
                 $this,
-                $this->request->type
+                $this->request->type,
             ));
         } else {
             $this->defaults();
@@ -75,11 +75,11 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     //组合返回值 成功
     public function make_success($data = null)
     {
-        return $this->make_response(0, '操作成功！', $data);
+        return $this->make_response(0, 'Success', $data);
     }
 
     //组合返回值 失败
-    public function make_error($msg ='', $code = 1)
+    public function make_error($msg = '', $code = 1)
     {
         return $this->make_response($code, $msg);
     }
@@ -95,7 +95,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
      * @param $desc
      * @return mixed|string
      */
-    function parseDesc2img($desc, $defaultSlugUrl = null)
+    public function parseDesc2img($desc, $defaultSlugUrl = null)
     {
         $preg = '/^<(.*)>([\s\S]*)/';
         preg_match($preg, $desc, $res);
@@ -108,7 +108,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $defaultSlugUrl;
     }
 
-    function parseDesc2text($desc)
+    public function parseDesc2text($desc)
     {
         $preg = '/^<(.*)>([\s\S]*)/';
         preg_match_all($preg, $desc, $res);
@@ -124,7 +124,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
      * @param string $trim
      * @return string
      */
-    function tp_trim_words($content, $length = 100, $trim = '...')
+    public function tp_trim_words($content, $length = 100, $trim = '...')
     {
         return Typecho_Common::subStr(strip_tags($content), 0, $length, $trim);
     }
@@ -152,7 +152,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $this->db->fetchAll($select);
     }
 
-
     /**
      * 获取目录
      * @param $args
@@ -161,27 +160,26 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     public function get_all_tags()
     {
         return $this->db->fetchAll($this->db
-        ->select()->from('table.metas')
-        ->where('type = ?', 'tag'));
+                ->select()->from('table.metas')
+                ->where('type = ?', 'tag'));
     }
-
 
     public function get_the_category($id)
     {
         return $this->db->fetchAll($this->db
-            ->select()->from('table.metas')
-            ->join('table.relationships', 'table.relationships.mid = table.metas.mid')
-            ->where('table.relationships.cid = ?', $id)
-            ->where('table.metas.type = ?', 'category'), array($this->widget('Widget_Abstract_Metas'), 'filter'));
+                ->select()->from('table.metas')
+                ->join('table.relationships', 'table.relationships.mid = table.metas.mid')
+                ->where('table.relationships.cid = ?', $id)
+                ->where('table.metas.type = ?', 'category'), array($this->widget('Widget_Abstract_Metas'), 'filter'));
     }
 
     public function get_the_tags($id, $limit = 2)
     {
         return $this->db->fetchAll($this->db
-            ->select()->from('table.metas')
-            ->join('table.relationships', 'table.relationships.mid = table.metas.mid')
-            ->where('table.relationships.cid = ?', $id)
-            ->where('table.metas.type = ?', 'tag')->limit($limit), array($this->widget('Widget_Abstract_Metas'), 'filter'));
+                ->select()->from('table.metas')
+                ->join('table.relationships', 'table.relationships.mid = table.metas.mid')
+                ->where('table.relationships.cid = ?', $id)
+                ->where('table.metas.type = ?', 'tag')->limit($limit), array($this->widget('Widget_Abstract_Metas'), 'filter'));
     }
 
     public function get_post_type($post_id)
@@ -213,11 +211,11 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     {
         if ($key == 'views') {
             return $this->db->query($this->db->update('table.contents')->where('cid = ?', $post_id)->rows([
-                'views' => $value
+                'views' => $value,
             ]));
         } elseif ($key == 'likes') {
             return $this->db->query($this->db->update('table.contents')->where('cid = ?', $post_id)->rows([
-                'likes' => $value
+                'likes' => $value,
             ]));
         }
     }
@@ -244,6 +242,31 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     {
         $this->db->query($this->db->update('table.users')->where('table.users.uid = ?', $uid)->rows($arr));
         return $uid;
+    }
+
+    private function login_state_error($hasError)
+    {
+        $table_setting = $this->db->getPrefix() . 'client_setting';
+        $setting = $this->db->fetchRow($this->db->query("SELECT * FROM `$table_setting` LIMIT 0, 1"));
+        if (empty($setting)) {
+            if ($hasError) {
+                $this->db->query($this->db->insert($table_setting)->rows([
+                    'mobile_logged' => time(),
+                    'mobile_login_state' => 1,
+                ]));
+            } else {
+                return 20;
+            }
+        } else {
+            if ($hasError) {
+                $this->db->query($this->db->update($table_setting)->where('mobile_logged = ?', $setting['mobile_logged'])->rows([
+                    'mobile_logged' => time(),
+                ]));
+            }
+            $hasTime = time() - (int) $setting['mobile_logged'];
+            return $hasTime;
+        }
+
     }
 
     public function get_post_excerpt($content, $length = 50, $trim = '...')
@@ -290,10 +313,10 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         foreach ($tags as $tag) {
             //计算字符串长度 兼容中英文
 
-           $data[] = [
+            $data[] = [
                 'id' => $tag['mid'],
                 'name' => $tag['name'],
-                'permalink' => $tag['permalink']
+                'permalink' => $tag['permalink'],
             ];
 
             //列表中最多放2个标签 或 标签长度和大于6
@@ -351,7 +374,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             }
         }
 
-
         return $select;
     }
 
@@ -366,11 +388,11 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         }
         $sticky_posts = explode(',', $sticky_posts);
 //        $posts = [];
-//        foreach ($sticky_posts as $sticky_post) {
-//            $this->widget('Widget_Archive@'.$sticky_post, 'pageSize=1&type=post', 'cid='.$sticky_post)->to($post);
-//            $posts[] = $post;
-//        }
-//        return $posts;
+        //        foreach ($sticky_posts as $sticky_post) {
+        //            $this->widget('Widget_Archive@'.$sticky_post, 'pageSize=1&type=post', 'cid='.$sticky_post)->to($post);
+        //            $posts[] = $post;
+        //        }
+        //        return $posts;
         return $this->db->fetchAll($this->db->select()->from('table.contents')->where('cid IN ?', $sticky_posts));
     }
 
@@ -402,10 +424,10 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             $common_posts = $this->db->fetchAll($select);
 
 //            $common_posts = [];
-//            foreach ($common_posts_ids as $comon_posts_id){
-//                $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
-//                $common_posts[]  = $post;
-//            }
+            //            foreach ($common_posts_ids as $comon_posts_id){
+            //                $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
+            //                $common_posts[]  = $post;
+            //            }
             $common_posts = $this->filter_post_for_list($common_posts);
             $posts = array_merge($posts_stick, $common_posts);
         } else {
@@ -414,10 +436,10 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             $common_posts = $this->db->fetchAll($select);
 
 //            $common_posts = [];
-//            foreach ($common_posts_ids as $comon_posts_id){
-//                $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
-//                $common_posts[]  = $post;
-//            }
+            //            foreach ($common_posts_ids as $comon_posts_id){
+            //                $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
+            //                $common_posts[]  = $post;
+            //            }
             $posts = $this->filter_post_for_list($common_posts);
         }
 
@@ -529,7 +551,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             foreach ($result as $item) {
                 $slides[] = [
                     'id' => $item['cid'],
-                    'thumbnail' => self::GetRandomThumbnail($item['text'])
+                    'thumbnail' => self::GetRandomThumbnail($item['text']),
                 ];
             }
         }
@@ -567,17 +589,17 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                 'left' => [
                     'image' => $active_left_arr[0],
                     'title' => $active_left_arr[1],
-                    'link' => $active_left_arr[2]
+                    'link' => $active_left_arr[2],
                 ],
                 'right_top' => [
                     'image' => $active_right_top_arr[0],
                     'title' => $active_right_top_arr[1],
-                    'link' => $active_right_top_arr[2]
+                    'link' => $active_right_top_arr[2],
                 ],
                 'right_down' => [
                     'image' => $active_right_down_arr[0],
                     'title' => $active_right_down_arr[1],
-                    'link' => $active_right_down_arr[2]
+                    'link' => $active_right_down_arr[2],
                 ],
             ];
         } else {
@@ -595,7 +617,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                 $hots[] = [
                     'id' => $item['cid'],
                     'title' => $item['title'],
-                    'thumbnail' => self::GetRandomThumbnail($item['text'])
+                    'thumbnail' => self::GetRandomThumbnail($item['text']),
                 ];
             }
         }
@@ -657,46 +679,45 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $comments_count_waiting = 0;
         $comments_count_spam = 0;
 
-
-        // -- 
+        // --
         $contents_post_publish = 0;
         $contents_post_password = 0;
         $contents_post_post_draft = 0;
         $contents_post_hidden = 0;
         $contents_post_private = 0;
-        // ---- 
+        // ----
         $contents_page_count = 0;
-        
+
         foreach ($comments as $comment) {
             // 通过
             if ($comment['status'] == 'approved') {
                 $comments_approved_count++;
-            }else if ($comment['status'] == 'waiting') {
+            } else if ($comment['status'] == 'waiting') {
                 $comments_count_waiting++;
-            }else if ($comment['status'] == 'spam') {
+            } else if ($comment['status'] == 'spam') {
                 $comments_count_spam++;
             }
         }
-        
+
         foreach ($contents as $content) {
-            // post 
-            if($content['type'] == 'post') {
-                if(!empty($content['password'])) {
+            // post
+            if ($content['type'] == 'post') {
+                if (!empty($content['password'])) {
                     $contents_post_password++;
-                }else if ($content['status'] == 'publish') {
+                } else if ($content['status'] == 'publish') {
                     // 发布
                     $contents_post_publish++;
-                }else if ($content['status'] == 'hidden') {
+                } else if ($content['status'] == 'hidden') {
                     // 隐藏
                     $contents_post_hidden++;
-                }else if ($content['status'] == 'private') {
+                } else if ($content['status'] == 'private') {
                     // 私有
                     $contents_post_private++;
                 }
-            }else if ($content['type'] == 'page') {
+            } else if ($content['type'] == 'page') {
                 // page
                 $contents_page_count++;
-            }else if ($content['type'] == 'post_draft') {
+            } else if ($content['type'] == 'post_draft') {
                 // 草稿
                 $contents_post_post_draft++;
             }
@@ -704,7 +725,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $comment_count = [
             'comments_approved_count' => $comments_approved_count,
             'comments_count_waiting' => $comments_count_waiting,
-            'comments_count_spam' => $comments_count_spam
+            'comments_count_spam' => $comments_count_spam,
         ];
         $contents_post = [
             'contents_post_publish' => $contents_post_publish,
@@ -740,7 +761,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                 'id' => $cat['mid'],
                 'name' => $cat['name'],
                 'description' => $this->parseDesc2text($cat['description']),
-                'cover' => $this->parseDesc2img($cat['description'], null)
+                'cover' => $this->parseDesc2img($cat['description'], null),
             ];
         }
 
@@ -748,9 +769,9 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
 /**
-     * 获取所有分类
-     * @throws Typecho_Plugin_Exception
-     */
+ * 获取所有分类
+ * @throws Typecho_Plugin_Exception
+ */
     public function get_tag_index()
     {
 
@@ -782,7 +803,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'posts_per_page' => self::POSTS_PER_PAGE,
             'offset' => $offset,
             'orderby' => 'created',
-            'order' => 'DESC'
+            'order' => 'DESC',
         ];
 
         $hide_cat = self::option_value('JHide_cat');
@@ -806,7 +827,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'posts_per_page' => self::POSTS_PER_PAGE,
             'offset' => $offset,
             'orderby' => 'created',
-            'cat' => $cat_id
+            'cat' => $cat_id,
         ];
 
         $posts = $this->get_posts($args);
@@ -826,7 +847,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'posts_per_page' => self::POSTS_PER_PAGE,
             'offset' => $offset,
             'orderby' => 'created',
-            'tag_id' => $tag_id
+            'tag_id' => $tag_id,
         ];
 
         $posts = $this->get_posts($args);
@@ -850,10 +871,10 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             $page_index = 1;
         }
 
-        $offset = ($page_index-1) * $page_size;
+        $offset = ($page_index - 1) * $page_size;
         $limit = "LIMIT $page_size OFFSET $offset";
-       
-        $table_contents = $this->db->getPrefix() . 'contents';//"SELECT times FROM `$table_post_search` WHERE search=%s", $search
+
+        $table_contents = $this->db->getPrefix() . 'contents'; //"SELECT times FROM `$table_post_search` WHERE search=%s", $search
         $contents = $this->db->fetchAll($this->db->query("SELECT title,`text`,`created`,`password`,cid,`status`,`type` FROM `$table_contents`
          WHERE type = 'post' AND title LIKE '%$search%' OR text LIKE '%$search%' ORDER BY created DESC $limit"));
 
@@ -866,7 +887,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                     'cid' => $content['cid'],
                     'title' => $content['title'],
                     'password' => $content['password'],
-                    'content' => substr($content['text'] , 0 , 200),
+                    'content' => substr($content['text'], 0, 200),
                     'status' => $content['status'],
                     'created' => $content['created'],
                 ];
@@ -874,7 +895,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
 
             return $this->make_success($posts);
         }
-        
+
     }
 
     /**
@@ -910,14 +931,14 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'title' => $postObj->title,
             'content' => $postObj->content, //preg_replace("/<!--markdown-->/sm", '', $postObj->text),
             'comment_count' => $postObj->commentsNum,
-            'thumbnail' => self::GetRandomThumbnail($postObj->text)
+            'thumbnail' => self::GetRandomThumbnail($postObj->text),
         ];
         $post['excerpt'] = html_entity_decode(self::tp_trim_words($postObj->text, 100, '...'));
 
 //        if ($postObj->excerpt) {
-//            $post['excerpt'] = html_entity_decode(self::tp_trim_words($postObj->excerpt, 100, '...'));
-//        } else {
-//        }
+        //            $post['excerpt'] = html_entity_decode(self::tp_trim_words($postObj->excerpt, 100, '...'));
+        //        } else {
+        //        }
 
         //查询tag
         $tags = self::get_the_tags($post_id);
@@ -994,9 +1015,9 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $author = [
             'uid' => $postObj->author->uid,
             'username' => $postObj->author->screenName,
-            'intro' => $postObj->author->userSign==""?'该用户太懒了~':$postObj->author->userSign,
+            'intro' => $postObj->author->userSign == "" ? '该用户太懒了~' : $postObj->author->userSign,
             'avatar' => empty($postObj->author->avatarUrl) ? $postObj->author->userAvatar : $postObj->author->avatarUrl,
-            'is_follow' => UserFollow::statusFollow($user_id, $postObj->author->uid)
+            'is_follow' => UserFollow::statusFollow($user_id, $postObj->author->uid),
         ];
         $post['author'] = $author;
 
@@ -1056,10 +1077,10 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $common_posts = $this->db->fetchAll($select);
 
 //        $common_posts = [];
-//        foreach ($common_posts_ids as $comon_posts_id){
-//            $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
-//            $common_posts[]  = $post;
-//        }
+        //        foreach ($common_posts_ids as $comon_posts_id){
+        //            $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
+        //            $common_posts[]  = $post;
+        //        }
         $posts = $this->filter_post_for_list($common_posts);
 
         foreach ($posts as &$post) {
@@ -1138,13 +1159,13 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $this->make_success($posts);
     }
 
-  /**
+    /**
      * typecho 发布文章
      * @return array
      * @throws Typecho_Exception
      */
     public function post_new()
-    {   
+    {
         $user_id = $this->check_login();
         if (!$user_id) {
             return $this->make_error('还没有登陆', -1);
@@ -1152,29 +1173,27 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $title = $request->get('title');
         $text = $request->get('text');
         $key = $request->get('sign');
-        if(empty($title)){
+        if (empty($title)) {
             return $this->make_error('参数错误');
         }
         $categoryMid = $request->get('category');
-        $categoryResult=[];
-        if(!empty($categoryMid)) {
-            $category=explode(',',$category);
-            $category=is_array($category)?$category:'';
-            $cids=array();
-            foreach ($category as $v){
-                $catData=get_the_category($v);
-                if(!empty($catData)&&$catData['type']=='category'){
-                    $cids[$catData['mid']]=$catData['mid'];
+        $categoryResult = [];
+        if (!empty($categoryMid)) {
+            $category = explode(',', $category);
+            $category = is_array($category) ? $category : '';
+            $cids = array();
+            foreach ($category as $v) {
+                $catData = get_the_category($v);
+                if (!empty($catData) && $catData['type'] == 'category') {
+                    $cids[$catData['mid']] = $catData['mid'];
                 }
             }
-            $categoryResult=$cids;
-        }else{
-            $categoryResult=[];
+            $categoryResult = $cids;
+        } else {
+            $categoryResult = [];
         }
         return $this->make_success($$categoryResult);
     }
-    
-
 
     /**
      * typecho 登录接口
@@ -1183,23 +1202,47 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
      */
     public function user_login()
     {
-        $username = $this->request->get('username','');
+        $username = $this->request->get('username', '');
         $password = $this->request->get('password', '');
+
+        // 开启了安全设置
+        $security = self::option_value('JSwitch_login_security') == 1;
+        if ($security) {
+            $error = $this->login_state_error(false);
+            if ($error > 6) {
+                $this->login_by_pwd($username, $password, $security);
+            } else {
+                return $this->make_error(sprintf('登陆错误,请%u秒后再试', 6-$error));
+            }
+        } else {
+            $this->login_by_pwd($username, $password, $security);
+        }
+
+    }
+
+    private function login_by_pwd($username, $password, $security)
+    {
         $user = Typecho_Widget::widget('Widget_User');
         if (!$user->login($username, $password, true)) { //使用特定的账号登陆
-            return $this->make_error('登录失败');
+            if ($security) {
+                $this->login_state_error(true);
+            }
+            return $this->make_error('用户名或密码错误');
         }
         $mobile_token = $this->generate_token();
+        $uid = $user->uid;
+
         $this->tp_update_user($user->uid, [
-            'mobile_token' => $mobile_token
+            'mobile_token' => $mobile_token,
         ]);
         $userdata = array(
             "nickname" => $user->screenName,
             "token" => $mobile_token,
-            "mail" => $user->mail
+            "mail" => $user->mail,
         );
 
         return $this->make_success($userdata);
+
     }
 
     public function geturl($url, $data)
@@ -1211,8 +1254,8 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $headerArray = array("Content-type:application/json;", "Accept:application/json");
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url . $query);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headerArray);
         $output = curl_exec($ch);
@@ -1221,15 +1264,14 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $output;
     }
 
-
     public function posturl($url, $data)
     {
         $data = json_encode($data);
         $headerArray = array("Content-type:application/json;charset='utf-8'", "Accept:application/json");
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($curl, CURLOPT_POST, 1);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headerArray);
@@ -1238,9 +1280,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         curl_close($curl);
         return json_decode($output, true);
     }
-
- 
-
 
     /**
      * 用户 点赞 文章
@@ -1333,7 +1372,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             if (empty($user['uid'])) {
                 return $this->make_success([
 //                    "comments" => [],
-//                    "user_mail" => ''
+                    //                    "user_mail" => ''
                 ]);
             }
         } else {
@@ -1347,11 +1386,11 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         }
         return $this->make_success($comments);
 //        return $this->make_success([
-//            "comments" => $comments,
-//            "user_mail" => empty($user['ext_mail'])?'':$user['ext_mail']
-//        ]);
+        //            "comments" => $comments,
+        //            "user_mail" => empty($user['ext_mail'])?'':$user['ext_mail']
+        //        ]);
     }
- /**
+    /**
      * 文章的评论列表
      */
     public function comment_all()
@@ -1366,9 +1405,9 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             $page_index = 1;
         }
 
-        $offset = ($page_index-1) * $page_size;
+        $offset = ($page_index - 1) * $page_size;
         $limit = "LIMIT $page_size OFFSET $offset";
-        $table_comments = $this->db->getPrefix().'comments';
+        $table_comments = $this->db->getPrefix() . 'comments';
         $result = $this->db->fetchAll($this->db->query("SELECT * FROM `$table_comments` ORDER BY created DESC $limit"));
 
         $comments = [];
@@ -1386,11 +1425,11 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                 'time' => Utils::time_beautify($comment['created']),
             ];
         }
-    
-       return $this->make_success([
-           "comments" => $comments,
-           "current_user_is_admin" => $user['group'] == 'administrator' ? true : false,
-       ]);
+
+        return $this->make_success([
+            "comments" => $comments,
+            "current_user_is_admin" => $user['group'] == 'administrator' ? true : false,
+        ]);
     }
     /**
      * 发布评论
@@ -1410,7 +1449,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             return $this->make_error('参数错误');
         }
         $post = $this->db->fetchObject($this->db->select('authorId')->from('table.contents')->where('cid = ?', $post_id));
-        if (empty((array)$post_id)) {
+        if (empty((array) $post_id)) {
             return $this->make_error("评论的文章不存在");
         }
 
@@ -1425,7 +1464,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                 return $this->make_error("请输入正确的邮箱地址");
             }
         }
-        
+
         // 没有登陆也是能够评论的
         // 只需要按照设置 审核就可以了。
         $isAdmin = false;
@@ -1438,8 +1477,8 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             }
         }
 //            'waiting'      =>  _t('待审核'),
-//            'approved'   =>  _t('显示'),
-//            'spam'      =>  _t('垃圾')
+        //            'approved'   =>  _t('显示'),
+        //            'spam'      =>  _t('垃圾')
         $status = self::option_value('JSwitch_comment_audit') == '1';
         $comment_approved = self::option_value('JSwitch_comment_verify') === '1' && !$isAdmin ? 'waiting' : 'approved';
 
@@ -1457,17 +1496,17 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'agent' => 'typechoMobile v1.0',
             'ip' => '8.8.8.8',
             'url' => $c_url,
-            'mail' => $c_mail
+            'mail' => $c_mail,
 
         ]));
         if ($post_id > 0) {
             $row = $this->db->fetchRow($this->db->select('commentsNum')->from('table.contents')->where('cid = ?', $post_id));
-            $this->db->query($this->db->update('table.contents')->rows(array('commentsNum' => (int)$row['commentsNum'] + 1))->where('cid = ?', $post_id));
+            $this->db->query($this->db->update('table.contents')->rows(array('commentsNum' => (int) $row['commentsNum'] + 1))->where('cid = ?', $post_id));
         }
         $userInfo = [
             'name' => $nickname,
             'mail' => $c_mail,
-            'url' => $c_url
+            'url' => $c_url,
         ];
 
         $comments = [
@@ -1477,7 +1516,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'status' => $comment_approved,
             'time' => $createTime,
         ];
-        
+
         return $this->make_success($comments);
     }
 
@@ -1503,7 +1542,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $res = $this->db->query("DELETE FROM $table_comments WHERE coid=$comment_id OR parent=$comment_id");
         if ($post_id > 0) {
             $row = $this->db->fetchRow($this->db->select('commentsNum')->from('table.contents')->where('cid = ?', $post_id));
-            $this->db->query($this->db->update('table.contents')->rows(array('commentsNum' => (int)$row['commentsNum'] - 1))->where('cid = ?', $post_id));
+            $this->db->query($this->db->update('table.contents')->rows(array('commentsNum' => (int) $row['commentsNum'] - 1))->where('cid = ?', $post_id));
         }
         return $this->make_success($res);
     }
@@ -1533,9 +1572,9 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $comments = [];
         foreach ($result as $comment) {
 //            $name = $this->get_user_meta($comment['ownerId'], 'screenName', true);
-//            if (!$name) {
-//                $name = $this->get_user_meta($comment['ownerId'], 'name', true);
-//            }
+            //            if (!$name) {
+            //                $name = $this->get_user_meta($comment['ownerId'], 'name', true);
+            //            }
 
 //            $avatar = $this->get_user_meta($comment['ownerId'], 'avatarUrl', true);
 
@@ -1568,12 +1607,15 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     private function check_login()
     {
 //        $real_user = Typecho_Widget::widget('Widget_User');
-//        return $real_user->hasLogin()?$real_user->uid:false;
+        //        return $real_user->hasLogin()?$real_user->uid:false;
         $token = $this->request->get('token', '');
         if (empty($token)) {
             return false;
         }
-        if ($token == 'false') return '';
+        if ($token == 'false') {
+            return '';
+        }
+
         $user_id = $this->db->fetchRow($this->db->select('uid')->from('table.users')->where('mobile_token = ?', $token))['uid'];
 
         return $user_id ? $user_id : false;
@@ -1617,7 +1659,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'IllegalAesKey' => -41001,
             'IllegalIv' => -41002,
             'IllegalBuffer' => -41003,
-            'DecodeBase64Error' => -41004
+            'DecodeBase64Error' => -41004,
         );
 
         if (strlen($session) != 24) {
@@ -1631,7 +1673,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $aesCipher = base64_decode($encryptedData);
         $result = openssl_decrypt($aesCipher, "AES-128-CBC", $aesKey, 1, $aesIV);
         $data_decode = json_decode($result);
-        if ($data_decode == NULL) {
+        if ($data_decode == null) {
             return array('code' => $ErrorCode['IllegalBuffer'], 'message' => '解密失败，非法缓存');
         }
         if ($data_decode->watermark->appid != $appid) {
@@ -1641,9 +1683,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $ErrorCode['OK'];
     }
 
-
-
-   
     private function http_post_data($url, $data_string)
     {
         $ch = curl_init();
@@ -1651,8 +1690,8 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json; charset=utf-8',
-                'Content-Length: ' . strlen($data_string))
+            'Content-Type: application/json; charset=utf-8',
+            'Content-Length: ' . strlen($data_string))
         );
         ob_start();
         curl_exec($ch);
@@ -1665,7 +1704,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $return_content;
     }
 
-    function random_code($length = 8, $chars = null)
+    public function random_code($length = 8, $chars = null)
     {
         if (empty($chars)) {
             $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1702,14 +1741,13 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             'posts_per_page' => self::POSTS_PER_PAGE,
             'offset' => $offset,
             'orderby' => 'views',
-            'order' => 'DESC'
+            'order' => 'DESC',
         ];
 
         $hide_cat = self::option_value('JHide_cat');
         if (!empty($hide_cat)) {
             $args['category__not_in'] = explode(',', $hide_cat);
         }
-
 
         $select = $this->db->select();
         $select = $this->queryPost($select, $args);
@@ -1718,7 +1756,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         $data = [
             'per_page' => self::POSTS_PER_PAGE,
             'current_page' => ($offset / self::POSTS_PER_PAGE) + 1,
-            'data' => []
+            'data' => [],
         ];
 
         foreach ($common_posts as $post) {
@@ -1745,8 +1783,8 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
                 ],
                 'topicInfo' => [
                     'cate_id' => $postObj->categoryId,
-                    'topic_name' => $postObj->categoryArray['name']
-                ]
+                    'topic_name' => $postObj->categoryArray['name'],
+                ],
             ];
             array_push($data['data'], $tmp);
         }
@@ -1756,12 +1794,15 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     public function circle_follow_user()
     {
         $fid = $this->request->get('fid', '');
-        if(!$fid){
+        if (!$fid) {
             return $this->make_error('参数错误');
         }
         $user_id = self::check_login();
-        if(!$user_id) return $this->make_error_notlogin('没有登录');
-        if(UserFollow::addFollow($user_id,intval($fid))){
+        if (!$user_id) {
+            return $this->make_error_notlogin('没有登录');
+        }
+
+        if (UserFollow::addFollow($user_id, intval($fid))) {
             return $this->make_success();
         }
         return $this->make_error('error');
@@ -1770,13 +1811,16 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     public function circle_cancel_follow_user()
     {
         $fid = $this->request->get('fid', '');
-        if(!$fid){
+        if (!$fid) {
             return $this->make_error('参数错误');
         }
 
         $user_id = self::check_login();
-        if(!$user_id) return $this->make_error_notlogin('没有登录');
-        if(UserFollow::cancleFollow($user_id,intval($fid))){
+        if (!$user_id) {
+            return $this->make_error_notlogin('没有登录');
+        }
+
+        if (UserFollow::cancleFollow($user_id, intval($fid))) {
             return $this->make_success();
         }
         return $this->make_error('error');

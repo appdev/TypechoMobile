@@ -2,7 +2,7 @@
     <link href="<?php echo Helper::options()->rootUrl ?>/usr/plugins/TypechoMobile/assets/css/joe.setting.min.css" rel="stylesheet" type="text/css" />
     <div>
         <div class="j-aside">
-            <div class="logo">Typecho 客户端配套插件</div>
+            <div class="logo">TypechoMobile 配套插件</div>
             <ul class="j-setting-tab">
                 <li data-current="j-setting-notice">插件公告</li>
                 <li data-current="j-setting-basic">基础设置</li>
@@ -10,7 +10,6 @@
                 <!-- <li data-current="j-setting-hot">热门设置</li> -->
                 <li data-current="j-setting-login">登录设置</li>
             </ul>
-            <?php require_once('Backups.php'); ?>
         </div>
     </div>
     <span id="j-version" style="display: none;">v1.0</span>
@@ -161,16 +160,28 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         // $JHide_cat->setAttribute('class', 'j-setting-content j-setting-basic');
         // $form->addInput($JHide_cat);
 
-        $JSwitch_excerpt = new Typecho_Widget_Helper_Form_Element_Radio(
-                'JSwitch_excerpt',
+
+        $JSwitch_login_security = new Typecho_Widget_Helper_Form_Element_Radio(
+            'JSwitch_login_security',
             array(
-                    '0' => '不显示',
-                    '1' => '显示'
+                '0' => '关闭',
+                '1' => '开启'
             ),
-            '0','文章摘要','文章列表中是否显示摘要? *目前不生效（因为目前只有管理员功能，后期或许会有针对用户的单独的博客客户端）'
+            '1','登陆安全','开启后, 通过 APP 登陆, 若密码不正确, 将会休眠3秒以防止穷举爆破'
         );
-        $JSwitch_excerpt->setAttribute('class', 'j-setting-content j-setting-basic');
-        $form->addInput($JSwitch_excerpt);
+        $JSwitch_login_security->setAttribute('class', 'j-setting-content j-setting-basic');
+        $form->addInput($JSwitch_login_security);
+
+        // $JSwitch_post_new = new Typecho_Widget_Helper_Form_Element_Radio(
+        //     'JSwitch_post_new',
+        //     array(
+        //         '0' => '关闭',
+        //         '1' => '开启'
+        //     ),
+        //     '1','发布文章','是否允许从App上发布文章?'
+        // );
+        // $JSwitch_post_new->setAttribute('class', 'j-setting-content j-setting-basic');
+        // $form->addInput($JSwitch_post_new);
 
         $JSwitch_comment = new Typecho_Widget_Helper_Form_Element_Radio(
             'JSwitch_comment',
@@ -193,6 +204,18 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         );
         $JSwitch_comment_verify->setAttribute('class', 'j-setting-content j-setting-basic');
         $form->addInput($JSwitch_comment_verify);
+
+        $JSwitch_excerpt = new Typecho_Widget_Helper_Form_Element_Radio(
+            'JSwitch_excerpt',
+        array(
+                '0' => '不显示',
+                '1' => '显示'
+        ),
+        '0','文章摘要','文章列表中是否显示摘要? *目前不生效（因为目前只有管理员功能，后期或许会有针对用户的单独的博客客户端）'
+        );
+        $JSwitch_excerpt->setAttribute('class', 'j-setting-content j-setting-basic');
+        $form->addInput($JSwitch_excerpt);
+
 
         // $JDefault_thumbnail = new Typecho_Widget_Helper_Form_Element_Text(
         //     'JDefault_thumbnail',
@@ -363,18 +386,38 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         // create circle follow table
         $db = Typecho_Db::get();
         $prefix = $db->getPrefix();
-        
+        $adapterName = $db->getAdapterName();
         if (!array_key_exists('mobile_token', $db->fetchRow($db->select()->from('table.users')))) {
-            $mobile_token = self::generate_token();
-            $db->query('ALTER TABLE `'.$db->getPrefix().'users` ADD `mobile_token` varchar(50) DEFAULT "'.$mobile_token.'";');
+            $db->query('ALTER TABLE `'.$db->getPrefix().'users` ADD `mobile_token` varchar(50) DEFAULT "" ;');
+        }
+        if (strpos($adapterName, 'Mysql') !== false) {
+            if (!$db->fetchRow($db->query("SHOW TABLES LIKE '{$prefix}client_setting';", Typecho_Db::READ))) {
+                $db->query("CREATE TABLE IF NOT EXISTS `". $prefix . "client_setting` (
+                    `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                    `mobile_logged` INT(15) DEFAULT 0,
+                    `mobile_login_state` INT(10) DEFAULT 0,
+                    PRIMARY KEY (`id`)
+                  ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
+            }
+        } else if (strpos($adapterName, 'SQLite') !== false) {
+            if (!$db->fetchRow($db->query("SELECT name FROM sqlite_master WHERE TYPE='table' AND name='{$prefix}client_setting';", Typecho_Db::READ))) {
+                    $db->query("CREATE TABLE `". $prefix ."client_setting` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `mobile_logged` INT(15) DEFAULT 0,
+                        `mobile_login_state` INT(10) DEFAULT 0,
+                      )");
+
+            }
+        } else {
+            throw new Typecho_Plugin_Exception(_t('你的适配器为%s，目前只支持Mysql和SQLite', $adapterName));
         }
 
-        $type = explode('_', $db->getAdapterName());
-        $type = array_pop($type);
-    }
-
-    private static function generate_token()
-    {
-        return md5(uniqid(rand()));
+        
+        // if (!array_key_exists('mobile_logged', $db->fetchRow($db->select()->from('table.users')))) {
+        //     $db->query('ALTER TABLE `'.$db->getPrefix().'users` ADD `mobile_logged` INT(10) DEFAULT 0;');
+        // }
+        // if (!array_key_exists('mobile_state', $db->fetchRow($db->select()->from('table.users')))) {
+        //     $db->query('ALTER TABLE `'.$db->getPrefix().'users` ADD `mobile_state` INT(10) DEFAULT 0;');
+        // }
     }
 }
