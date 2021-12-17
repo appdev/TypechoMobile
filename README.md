@@ -22,7 +22,7 @@ Typecho Android 客户端的配套插件，你需要配合 [TypechoMobile](https
 [LinxApi](https://github.com/kirileec/LinxApi)
 
 # Licence
-
+```
                      GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -34,5 +34,5 @@ Typecho Android 客户端的配套插件，你需要配合 [TypechoMobile](https
 
   The GNU General Public License is a free, copyleft license for
 software and other kinds of works.
-
+```
 
