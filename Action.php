@@ -855,7 +855,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     /**
-     * 搜索文章
+     * 搜索文章 修改
      * @throws Typecho_Db_Exception
      * @throws Typecho_Plugin_Exception
      */
@@ -896,19 +896,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             return $this->make_success($posts);
         }
 
-    }
-
-    /**
-     * 热门搜索
-     * @throws Typecho_Db_Exception
-     */
-    public function get_search_hot()
-    {
-        $table_post_search = $this->db->getPrefix() . 'one_post_search';
-        $result = $this->db->fetchAll($this->db->query("SELECT search FROM `$table_post_search` ORDER BY times DESC LIMIT 0, 10"));
-        $searchs = array_column($result, 'search');
-
-        return $this->make_success($searchs);
     }
 
     /**
@@ -1044,120 +1031,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         return $this->make_success($page);
     }
 
-    /**
-     * 热门 浏览数[views] 点赞数[likes] 评论数[commnets]
-     * @throws Typecho_Plugin_Exception
-     * @throws Typecho_Exception
-     */
-    public function get_hot_posts()
-    {
-        $offset = $this->request->get('offset', 0);
 
-        $args = [
-            'posts_per_page' => self::POSTS_PER_PAGE,
-            'offset' => $offset,
-            'order' => 'DESC',
-        ];
-
-        $hide_cat = self::option_value('JHide_cat');
-        if (!empty($hide_cat)) {
-            $args['category__not_in'] = explode(',', $hide_cat);
-        }
-
-        $sort = $this->request->get('sort', 'views');
-        if ($sort == 'views' || $sort == 'likes' || $sort == 'favorites') {
-            $args['meta_key'] = $sort;
-            $args['orderby'] = $sort;
-        } else {
-            $args['orderby'] = 'commentsNum';
-        }
-
-        $select = $this->db->select();
-        $select = $this->queryPost($select, $args);
-        $common_posts = $this->db->fetchAll($select);
-
-//        $common_posts = [];
-        //        foreach ($common_posts_ids as $comon_posts_id){
-        //            $this->widget('Widget_Archive@'.$comon_posts_id['cid'], 'pageSize=1&type=post', 'cid='.$comon_posts_id['cid'])->to($post);
-        //            $common_posts[]  = $post;
-        //        }
-        $posts = $this->filter_post_for_list($common_posts);
-
-        foreach ($posts as &$post) {
-            //查询tag
-            $tags = self::get_the_tags($post['id']);
-            if (!$tags) {
-                $post['tags'] = [];
-            } else {
-                $post['tags'] = self::filter_tag_for_list($tags);
-            }
-
-            if ($sort == 'views' || $sort == 'likes' || $sort == 'favorites') {
-                $post[$sort] = self::get_post_meta($post['id'], $sort, true);
-            }
-
-            //美化时间
-            $post['time'] = Utils::time_beautify($post['time']);
-        }
-        return $this->make_success($posts);
-    }
-
-    /**
-     * 我的文章 浏览数[views] 点赞数[likes] 评论数[commnets] 收藏[favorite]
-     * @throws Typecho_Plugin_Exception
-     */
-    public function get_my_posts()
-    {
-        $user_id = $this->check_login();
-        if (!$user_id) {
-            return $this->make_error('还没有登陆', -1);
-        }
-
-        $track = $this->request->get('track', 'views');
-        if (empty($track)) {
-            return $this->make_error('缺少参数');
-        }
-
-        $offset = $this->request->get('offset', 0);
-
-        if ($track == 'views') {
-            $table_name = $this->db->getPrefix() . 'one_post_view';
-            $field = 'post_id';
-            $orderby = 'id';
-        } else if ($track == 'likes') {
-            $table_name = $this->db->getPrefix() . 'one_post_like';
-            $field = 'post_id';
-            $orderby = 'id';
-        } else if ($track == 'comments') {
-            $table_name = $this->db->getPrefix() . 'comments';
-            $field = 'cid';
-            $orderby = 'coid';
-        } else if ($track == 'favorites') {
-            $table_name = $this->db->getPrefix() . 'one_post_favorite';
-            $field = 'post_id';
-            $orderby = 'id';
-        }
-
-        $per_page_count = self::POSTS_PER_PAGE;
-        if ($track == 'comments') {
-            $post_ids = $this->db->fetchAll($this->db->query("SELECT distinct $field,$orderby FROM `$table_name` WHERE authorId=$user_id ORDER BY $orderby DESC LIMIT $offset, $per_page_count"));
-        } else {
-            $post_ids = $this->db->fetchAll($this->db->query("SELECT distinct $field,$orderby FROM `$table_name` WHERE user_id=$user_id ORDER BY $orderby DESC LIMIT $offset, $per_page_count"));
-        }
-        if (empty($post_ids)) {
-            return $this->make_success([]);
-        }
-
-        $args = [
-            'post__in' => array_column($post_ids, $field),
-            'orderby' => 'created',
-            'posts_per_page' => $per_page_count,
-            'ignore_sticky_posts' => 1,
-        ];
-
-        $posts = $this->get_posts($args);
-        return $this->make_success($posts);
-    }
 
     /**
      * typecho 发布文章
@@ -1170,29 +1044,97 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         if (!$user_id) {
             return $this->make_error('还没有登陆', -1);
         }
-        $title = $request->get('title');
-        $text = $request->get('text');
-        $key = $request->get('sign');
+        $cid = $this->request->get('cid','');
+        $title = $this->request->get('title');
+        $text = $this->request->get('text');
+        $slug = $this->request->get('slug');
+        
         if (empty($title)) {
             return $this->make_error('参数错误');
         }
-        $categoryMid = $request->get('category');
+        $categoryMid = $this->request->get('category');
+        $allowComment = $this->request->get('allowComment',1); // 默认允许评论
+
+        $visibility = $this->request->get('visibility','publish');
+        $tags = $this->request->get('tags');
+        $fieldNames = $this->request->get('fieldNames');
+        $fieldTypes = $this->request->get('fieldTypes');
+        $fieldValues = $this->request->get('fieldValues');
+        $password = $this->request->get('password');
+
+        $table_metas = $this->db->getPrefix() . 'metas';
         $categoryResult = [];
+
         if (!empty($categoryMid)) {
-            $category = explode(',', $category);
-            $category = is_array($category) ? $category : '';
-            $cids = array();
+            $category = $this->getArrayByString($categoryMid);
             foreach ($category as $v) {
-                $catData = get_the_category($v);
-                if (!empty($catData) && $catData['type'] == 'category') {
-                    $cids[$catData['mid']] = $catData['mid'];
+                $catData = $this->db->fetchRow($this->db->select('mid')->from($table_metas)->where("mid = ? AND type='category'", $v))['mid'];
+                if (!empty($catData)) {
+                    $categoryResult[] = $catData;
                 }
             }
-            $categoryResult = $cids;
         } else {
             $categoryResult = [];
         }
-        return $this->make_success($$categoryResult);
+        $user_login = Typecho_Widget::widget('Widget_User');
+        if (!$user_login->hasLogin()) {
+            if (!$user_login->simpleLogin($user_id)) {
+                return $this->make_error('用户登录错误');
+            }
+        }
+
+        //填充文章的相关字段信息。
+        $request = Typecho_Request::getInstance();
+        $request->setParams(
+            array(
+                'title' => $title,
+                'text' => $text,
+                'fieldNames' => $this->getArrayByString($fieldNames),
+                'fieldTypes' => $this->getArrayByString($fieldTypes),
+                'fieldValues' => $this->getArrayByString($fieldValues),
+                'cid' => $cid,// 可空
+                'visibility' => $visibility,
+                'do' => 'publish',
+                'category' => $categoryResult,
+                'markdown' => '1',
+                'date' => '',
+                'slug' => $slug,
+                'tags' => $tags,
+                'password' => $password,
+                'allowComment' => $allowComment,
+                'allowPing' => '1',
+                'allowFeed' => '1',
+                'trackback' => '',
+            )
+        );
+        
+        try {
+            //设置token，绕过安全限制
+            $security = $this->widget('Widget_Security');
+            $request->setParam('_', $security->getToken($this->request->getReferer()));
+            //设置时区，否则文章的发布时间会查8H
+            date_default_timezone_set('PRC');
+
+            //执行添加文章操作
+            $widgetName = 'Widget_Contents_Post_Edit';
+            $reflectionWidget = new ReflectionClass($widgetName);
+            if ($reflectionWidget->implementsInterface('Widget_Interface_Do')) {
+                //$result[0]['status']=201;
+
+                // $this->widget($widgetName, null, null, false)->writePost();
+                $this->widget($widgetName)->action();
+                return $this->make_success('Successful');
+            } else {
+                return $this->make_error("error");
+            }
+        } catch (Exception $ex) {
+            return $this->make_error($ex->getMessage());
+        }
+    }
+
+    private function getArrayByString($str){
+        $array = explode(',', $str);
+        return is_array($array) ? $array : array($str);
     }
 
     /**
@@ -1212,7 +1154,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             if ($error > 6) {
                 $this->login_by_pwd($username, $password, $security);
             } else {
-                return $this->make_error(sprintf('登陆错误,请%u秒后再试', 6-$error));
+                return $this->make_error(sprintf('登陆错误,请%u秒后再试', 6 - $error));
             }
         } else {
             $this->login_by_pwd($username, $password, $security);
@@ -1282,78 +1224,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     /**
-     * 用户 点赞 文章
-     * @throws Typecho_Db_Exception
-     */
-    public function user_like()
-    {
-        $post_id = $this->request->get('post_id', 0);
-        if (empty($post_id)) {
-            return $this->make_error('缺少参数');
-        }
-
-        $user_id = $this->check_login();
-        if (!$user_id) {
-            return $this->make_error('还没有登陆', -1);
-        }
-
-        $table_post_like = $this->db->getPrefix() . 'one_post_like';
-        $post_like_id = $this->db->fetchRow($this->db->query("SELECT id FROM `$table_post_like` WHERE user_id=" . $user_id . " AND post_id=" . $post_id))["id"];
-
-        $post_likes = self::get_post_meta($post_id, "likes", true);
-
-        if ($post_like_id) {
-            $this->db->query("DELETE FROM `$table_post_like` WHERE id=$post_like_id");
-
-            self::update_post_meta($post_id, 'likes', ($post_likes - 1));
-        } else {
-            $this->db->query($this->db->insert($table_post_like)->rows([
-                'user_id' => $user_id,
-                'post_id' => $post_id,
-            ]));
-
-            self::update_post_meta($post_id, 'likes', ($post_likes + 1));
-        }
-
-        return $this->make_success();
-    }
-
-    /**
-     * 用户 收藏 文章
-     */
-    public function user_favorite()
-    {
-        $post_id = $this->request->get('post_id', 0);
-        if (empty($post_id)) {
-            return $this->make_error('缺少参数');
-        }
-
-        $user_id = $this->check_login();
-        if (!$user_id) {
-            return $this->make_error('还没有登陆', -1);
-        }
-
-        $table_post_favorite = $this->db->getPrefix() . 'one_post_favorite';
-        $post_favorite_id = $this->db->fetchRow($this->db->query("SELECT id FROM `$table_post_favorite` WHERE user_id=" . $user_id . " AND post_id=" . $post_id))["id"];
-
-        $post_favorites = self::get_post_meta($post_id, "favorites", true);
-
-        if ($post_favorite_id) {
-            $this->db->query("DELETE FROM `$table_post_favorite` WHERE id=$post_favorite_id");
-
-            self::update_post_meta($post_id, 'favorites', ($post_favorites - 1));
-        } else {
-            $this->db->query($this->db->insert($table_post_favorite)->rows([
-                'user_id' => $user_id,
-                'post_id' => $post_id,
-            ]));
-            self::update_post_meta($post_id, 'favorites', ($post_favorites + 1));
-        }
-
-        return $this->make_success();
-    }
-
-    /**
      * 文章的评论列表
      */
     public function comment_index()
@@ -1362,22 +1232,7 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
         if (empty($post_id)) {
             return $this->make_error('缺少参数');
         }
-
         $offset = $this->request->get('offset', 0);
-
-        $token = $this->request->get('token', '');
-        $user = [];
-        if ($token != 'false') {
-            $user = $this->db->fetchRow($this->db->select('uid', 'ext_mail')->from('table.users')->where('mobile_token = ?', $token));
-            if (empty($user['uid'])) {
-                return $this->make_success([
-//                    "comments" => [],
-                    //                    "user_mail" => ''
-                ]);
-            }
-        } else {
-            $user['uid'] = null;
-        }
 
         $comments = $this->get_comments($post_id, $user['uid'], 0, $offset);
 
@@ -1385,10 +1240,6 @@ class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
             $comment['replys'] = $this->get_comments($post_id, $user['uid'], $comment['id']);
         }
         return $this->make_success($comments);
-//        return $this->make_success([
-        //            "comments" => $comments,
-        //            "user_mail" => empty($user['ext_mail'])?'':$user['ext_mail']
-        //        ]);
     }
     /**
      * 文章的评论列表
