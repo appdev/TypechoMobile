@@ -32,5 +32,5 @@ document.addEventListener("DOMContentLoaded", function() {
                     e.innerHTML = s
                 }
             } else e.innerHTML = "请求失败！"
-    }), a.open("get", "https://api.github.com/repos/appdev/TypechoMobile/releases/latest", !0), a.send(null)
+    }), a.open("get", "https://api.github.com/repos/appdev/TypechoMobile-plugin/releases/latest", !0), a.send(null)
 });
