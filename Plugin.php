@@ -12,7 +12,7 @@
             </ul>
         </div>
     </div>
-    <span id="j-version" style="display: none;">v1.0</span>
+    <span id="j-version" style="display: none;">v1.0.2</span>
     <!-- <span id="j-version">请保护好 API 仿制被滥用，建议服务器端配合 IP Fail2ban </span> -->
     <div class="j-setting-notice"></div>
     <script src="<?php echo Helper::options()->rootUrl ?>/usr/plugins/TypechoMobile/assets/js/joe.setting.min.js"></script>
