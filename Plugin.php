@@ -19,8 +19,7 @@
 <?php
 if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 /**
- * typecho mobile  专用插件
- * 文本解析暂时只支持 Markdown
+ * typecho mobile 配套插件
  * @package TypechoMobile
  * @author YingYue
  * @version 1.0.0
