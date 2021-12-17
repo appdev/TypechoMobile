@@ -22,7 +22,7 @@ Typecho Android 客户端的配套插件，你需要配合 [TypechoMobile](https
 [LinxApi](https://github.com/kirileec/LinxApi)
 
 # Licence
-                    GNU GENERAL PUBLIC LICENSE
+                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
