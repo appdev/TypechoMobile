@@ -349,7 +349,7 @@ class TypechoMobile_Plugin implements Typecho_Plugin_Interface
         $JLogin_bg = new Typecho_Widget_Helper_Form_Element_Text(
             'JLogin_bg',
             NULL,
-            "https://xcx.jiangqie.com/wp-content/uploads/2020/02/21212.png",
+            "",
             'APP启动图',
             'APP启动图'
         );

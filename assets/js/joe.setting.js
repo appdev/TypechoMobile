@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (4 === a.readyState)
             if (a.status >= 200 && a.status < 300 || 304 === a.status) {
                 let t = JSON.parse(a.responseText);
-                let newest = t.tag_name;
+                let newest = t.name;
                 if (newest > n.innerHTML) {
                     let s = '<h2 class="update">检测到版本更新！</h2><p>当前版本号：' + n.innerHTML + "</p><p>最新版本号：" + newest + "</p><p><a href=" + t.html_url + ">下载最新版本</a></p>";
                     e.innerHTML = s
