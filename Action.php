@@ -7,7 +7,7 @@ require_once 'Utils.php';
 
 require_once 'widget/Widget_Contents_Modify.php';
 
-define('UPLOAD_DIR', '/usr/uploads');
+const UPLOAD_DIR = '/usr/uploads';
 
 class TypechoMobile_Action extends Typecho_Widget implements Widget_Interface_Do
 {
